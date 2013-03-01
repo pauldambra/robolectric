@@ -21,7 +21,7 @@ import static org.robolectric.Robolectric.DEFAULT_SDK_VERSION;
 public abstract class TestUtil {
     public static final ResourcePath TEST_RESOURCE_PATH = new ResourcePath(R.class, resourceFile("res"), resourceFile("assets"));
     public static final String TEST_PACKAGE = R.class.getPackage().getName();
-    public static final ResourcePath SYSTEM_RESOURCE_PATH = new AndroidSdkFinder().findSystemResourcePath(DEFAULT_SDK_VERSION);
+    public static final ResourcePath SYSTEM_RESOURCE_PATH = new AndroidSdkFinder().getNewestSdkResourcePath();
     public static final String SYSTEM_PACKAGE = android.R.class.getPackage().getName();
     public static File testDirLocation;
 

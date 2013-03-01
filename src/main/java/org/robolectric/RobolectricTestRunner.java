@@ -6,6 +6,7 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
+import org.robolectric.annotation.Config;
 import org.robolectric.annotation.DisableStrictI18n;
 import org.robolectric.annotation.EnableStrictI18n;
 import org.robolectric.annotation.Values;
@@ -32,7 +33,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -82,8 +85,8 @@ public class RobolectricTestRunner extends BlockJUnit4ClassRunner implements Rob
         }
     }
 
-    public RobolectricContext getRobolectricContext() {
-        return sharedRobolectricContext;
+    public ClassLoader getInstrumentingClassLoader() {
+        return isBootstrapped(getClass()) ? getClass().getClassLoader() : sharedRobolectricContext.getRobolectricClassLoader();
     }
 
     protected static boolean isBootstrapped(Class<?> clazz) {
@@ -180,22 +183,58 @@ public class RobolectricTestRunner extends BlockJUnit4ClassRunner implements Rob
 
     public void setupApplicationState(Method testMethod) {
         boolean strictI18n = determineI18nStrictState(testMethod);
+        final Config config = getConfig(testMethod);
+        Class<? extends Configurer> configurerClass = config.configurer();
+        final Configurer configurer;
+        try {
+            configurer = configurerClass.newInstance();
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
 
-        ResourceLoader systemResourceLoader = getSystemResourceLoader(sharedRobolectricContext.getSystemResourcePath());
+        String qualifiers = determineResourceQualifiers(testMethod);
+
+        ResourcePath systemResourcePath = configurer.findSystemResourcePath(config);
+
+        ResourceLoader systemResourceLoader = getSystemResourceLoader(systemResourcePath);
         ShadowResources.setSystemResources(systemResourceLoader);
+        shadowOf(Resources.getSystem().getConfiguration()).overrideQualifiers(qualifiers);
 
         ClassHandler classHandler = sharedRobolectricContext.getClassHandler();
         classHandler.setStrictI18n(strictI18n);
 
-        AndroidManifest appManifest = sharedRobolectricContext.getAppManifest();
-        ResourceLoader resourceLoader = getAppResourceLoader(systemResourceLoader, appManifest);
+        if (config.type() == Config.Type.APP) {
+            AndroidManifest appManifest = configurer.createAppManifest(config);
+//            AndroidManifest appManifest = sharedRobolectricContext.getAppManifest(config);
+            ResourceLoader resourceLoader = getAppResourceLoader(systemResourceLoader, appManifest);
 
-        Robolectric.application = ShadowApplication.bind(createApplication(), appManifest, resourceLoader);
-        shadowOf(Robolectric.application).setStrictI18n(strictI18n);
+            Robolectric.application = ShadowApplication.bind(createApplication(appManifest), appManifest, resourceLoader);
+            shadowOf(Robolectric.application).setStrictI18n(strictI18n);
+            shadowOf(Robolectric.application.getResources().getConfiguration()).overrideQualifiers(qualifiers);
+        }
+    }
 
-        String qualifiers = determineResourceQualifiers(testMethod);
-        shadowOf(Resources.getSystem().getConfiguration()).overrideQualifiers(qualifiers);
-        shadowOf(Robolectric.application.getResources().getConfiguration()).overrideQualifiers(qualifiers);
+    static class Defaults implements InvocationHandler {
+        public static <A extends Annotation> A of(Class<A> annotation) {
+            //noinspection unchecked
+            return (A) Proxy.newProxyInstance(annotation.getClassLoader(),
+                    new Class[] {annotation}, new Defaults());
+        }
+        public Object invoke(Object proxy, Method method, Object[] args)
+                throws Throwable {
+            return method.getDefaultValue();
+        }
+    }
+
+    protected Config getConfig(Method method) {
+        // todo: check method too
+        Config annotation = method.getDeclaringClass().getAnnotation(Config.class);
+        if (annotation == null) {
+            annotation = Defaults.of(Config.class);
+        }
+        return annotation;
     }
 
     protected void configureShadows(Method testMethod) { // todo: dedupe this/bindShadowClasses
@@ -323,10 +362,10 @@ public class RobolectricTestRunner extends BlockJUnit4ClassRunner implements Rob
         try {
         	String name = anno.annotationType().getName();
         	Object newValue = null;
-    	
+
 	    	if (name.equals(WithConstantString.class.getName())) {
 	    		newValue = (String) anno.annotationType().getMethod("newValue").invoke(anno);
-	    	} 
+	    	}
 	    	else if (name.equals(WithConstantInt.class.getName())) {
 	    		newValue = (Integer) anno.annotationType().getMethod("newValue").invoke(anno);
 	    	}
@@ -392,9 +431,10 @@ public class RobolectricTestRunner extends BlockJUnit4ClassRunner implements Rob
      *
      * @return An instance of the Application class specified by the ApplicationManifest.xml or an instance of
      *         Application if not specified.
+     * @param appManifest
      */
-    protected Application createApplication() {
-        return new ApplicationResolver(sharedRobolectricContext.getAppManifest()).resolveApplication();
+    protected Application createApplication(AndroidManifest appManifest) {
+        return new ApplicationResolver(appManifest).resolveApplication();
     }
 
     private ResourceLoader getSystemResourceLoader(ResourcePath systemResourcePath) {

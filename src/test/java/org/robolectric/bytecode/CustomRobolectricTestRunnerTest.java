@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.model.InitializationError;
+import org.robolectric.AndroidManifest;
 import org.robolectric.Robolectric;
 import org.robolectric.TestRunners;
 
@@ -65,7 +66,7 @@ public class CustomRobolectricTestRunnerTest {
             afterTestCallCount++;
         }
 
-        @Override protected Application createApplication() {
+        @Override protected Application createApplication(AndroidManifest appManifest) {
             return new CustomApplication();
         }
     }

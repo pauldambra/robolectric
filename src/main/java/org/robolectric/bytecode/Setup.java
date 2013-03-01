@@ -4,6 +4,8 @@ import android.R;
 import android.net.Uri__FromAndroid;
 import org.robolectric.AndroidManifest;
 import org.robolectric.RobolectricContext;
+import org.robolectric.annotation.Config;
+import org.robolectric.Configurer;
 import org.robolectric.annotation.DisableStrictI18n;
 import org.robolectric.annotation.EnableStrictI18n;
 import org.robolectric.annotation.Values;
@@ -37,14 +39,17 @@ public class Setup {
             DatabaseConfig.DatabaseMap.class,
             R.class,
 
-            org.robolectric.bytecode.InstrumentingClassLoader.class,
-            org.robolectric.bytecode.JavassistInstrumentingClassLoader.class,
-            org.robolectric.bytecode.AsmInstrumentingClassLoader.class,
+            InstrumentingClassLoader.class,
+            JavassistInstrumentingClassLoader.class,
+            AsmInstrumentingClassLoader.class,
             RobolectricContext.class,
             RobolectricContext.Factory.class,
             ResourcePath.class,
             AndroidTranslator.class,
             ClassHandler.class,
+            Config.class,
+            Config.Type.class,
+            Configurer.class,
             Instrument.class,
             DoNotInstrument.class,
             Values.class,

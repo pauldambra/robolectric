@@ -1,10 +1,13 @@
 package org.robolectric;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.runners.model.InitializationError;
+import org.robolectric.annotation.Config;
 import org.robolectric.bytecode.AndroidTranslatorClassInstrumentedTest;
 import org.robolectric.bytecode.ClassInfo;
 import org.robolectric.bytecode.Setup;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import static org.robolectric.util.TestUtil.resourceFile;
@@ -16,7 +19,7 @@ public class TestRunners {
                 @Override
                 public RobolectricContext create() {
                     return new RobolectricContext() {
-                        @Override
+//                        todo @Override
                         protected AndroidManifest createAppManifest() {
                             return new AndroidManifest(resourceFile("TestAndroidManifest.xml"), resourceFile("res"), resourceFile("assets"));
                         }
@@ -67,13 +70,33 @@ public class TestRunners {
                 @Override
                 public RobolectricContext create() {
                     return new RobolectricContext() {
-                        @Override
+//                        todo @Override
                         protected AndroidManifest createAppManifest() {
                             return new AndroidManifest(resourceFile("TestAndroidManifest.xml"), resourceFile("res"), resourceFile("assets"));
                         }
                     };
                 }
             }));
+        }
+
+        @Override protected Config getConfig(Method method) {
+            return new Config() {
+                @Override public Type type() {
+                    return Type.APP;
+                }
+
+                @Override public String manifest() {
+                    return resourceFile("TestAndroidManifest.xml").getPath();
+                }
+
+                @Override public Class<? extends Configurer> configurer() {
+                    return Configurer.class;
+                }
+
+                @NotNull @Override public Class<? extends Annotation> annotationType() {
+                    return Config.class;
+                }
+            };
         }
     }
 
@@ -83,7 +106,7 @@ public class TestRunners {
                 @Override
                 public RobolectricContext create() {
                     return new RobolectricContext() {
-                        @Override
+//                        todo @Override
                         protected AndroidManifest createAppManifest() {
                             return new AndroidManifest(resourceFile("TestAndroidManifest.xml"), resourceFile("res"), resourceFile("assets"));
                         }

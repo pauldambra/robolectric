@@ -13,8 +13,6 @@ import org.robolectric.bytecode.Setup;
 import org.robolectric.bytecode.ShadowWrangler;
 import org.robolectric.bytecode.ZipClassCache;
 import org.robolectric.internal.RobolectricTestRunnerInterface;
-import org.robolectric.res.AndroidSdkFinder;
-import org.robolectric.res.ResourcePath;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -30,10 +28,8 @@ import static org.robolectric.RobolectricTestRunner.isBootstrapped;
 public class RobolectricContext {
     private static final Map<Class<? extends RobolectricTestRunner>, RobolectricContext> contextsByTestRunner = new HashMap<Class<? extends RobolectricTestRunner>, RobolectricContext>();
 
-    private final AndroidManifest appManifest;
     private final ClassLoader robolectricClassLoader;
     private final ClassHandler classHandler;
-    private ResourcePath systemResourcePath;
     public static RobolectricContext mostRecentRobolectricContext; // ick, race condition
 
     public interface Factory {
@@ -67,7 +63,6 @@ public class RobolectricContext {
     public RobolectricContext() {
         Setup setup = createSetup();
         classHandler = createClassHandler(setup);
-        appManifest = createAppManifest();
         robolectricClassLoader = createRobolectricClassLoader(setup);
     }
 
@@ -91,24 +86,8 @@ public class RobolectricContext {
         return new AndroidTranslator(classCache, setup);
     }
 
-    protected AndroidManifest createAppManifest() {
-        return new AndroidManifest(new File("."));
-    }
-
-    public AndroidManifest getAppManifest() {
-        return appManifest;
-    }
-
     public ClassHandler getClassHandler() {
         return classHandler;
-    }
-
-    public synchronized ResourcePath getSystemResourcePath() {
-        if (systemResourcePath == null) {
-            int targetSdkVersion = appManifest.getTargetSdkVersion();
-            systemResourcePath = new AndroidSdkFinder().findSystemResourcePath(targetSdkVersion);
-        }
-        return systemResourcePath;
     }
 
     private Class<?> bootstrapTestClass(Class<?> testClass) {
