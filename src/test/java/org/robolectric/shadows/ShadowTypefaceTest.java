@@ -1,6 +1,7 @@
 // Not in master, can maybe be deleted
 package org.robolectric.shadows;
 
+import android.content.res.AssetManager;
 import android.graphics.Typeface;
 import org.junit.After;
 import org.junit.Before;
@@ -8,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.TestRunners;
+import org.robolectric.res.FileFsFile;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,7 +23,7 @@ public class ShadowTypefaceTest {
 
     @Before
     public void setup() throws Exception {
-        File assetsBase = shadowOf(Robolectric.application).getAppManifest().getAssetsDirectory();
+        File assetsBase = ((FileFsFile) shadowOf(Robolectric.application).getAppManifest().getAssetsDirectory()).getFile();
         fontFile = new File(assetsBase, "myFont.ttf");
         FileWriter fileWriter = new FileWriter(fontFile);
         fileWriter.write("fontdata");
@@ -35,8 +37,9 @@ public class ShadowTypefaceTest {
 
     @Test
     public void canAnswerAssetUsedDuringCreation() throws Exception {
-        Typeface typeface = Typeface.createFromAsset(Robolectric.application.getAssets(), "myFont.ttf");
-        assertThat(shadowOf(typeface).getAssetPath()).isEqualTo("myFont.ttf");
+        AssetManager assetManager = Robolectric.application.getAssets();
+        Typeface typeface = Typeface.createFromAsset(assetManager, "myFont.ttf");
+        assertThat(shadowOf(typeface).getAssetPath()).isEqualTo(fontFile.getPath());
     }
 
     @Test(expected = RuntimeException.class)

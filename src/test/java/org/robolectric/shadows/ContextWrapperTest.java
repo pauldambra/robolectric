@@ -198,4 +198,19 @@ public class ContextWrapperTest {
     public void packageManagerShouldNotBeNullWhenWrappingAnApplication() {
         assertThat(new Application().getPackageManager()).isNotNull();
     }
+
+    @Test
+    public void checkCallingPermissionShouldGrantPermissionByDefault() throws Exception {
+        assertThat(contextWrapper.checkCallingPermission("")).isEqualTo(PERMISSION_GRANTED);
+    }
+
+    @Test
+    public void checkCallingOrSelfPermissionShouldGrantPermissionByDefault() throws Exception {
+        assertThat(contextWrapper.checkCallingOrSelfPermission("")).isEqualTo(PERMISSION_GRANTED);
+    }
+
+    @Test
+    public void openOrCreateDatabaseShouldAlwaysReturnSameDatabase() throws Exception {
+        assertThat(contextWrapper.openOrCreateDatabase("db", 0, null)).isNotNull();
+    }
 }

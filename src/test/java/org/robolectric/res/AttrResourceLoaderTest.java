@@ -16,8 +16,8 @@ public class AttrResourceLoaderTest {
     @Before
     public void setUp() throws Exception {
         attrResourceLoader = new AttrResourceLoader();
-        new DocumentLoader(attrResourceLoader).loadResourceXmlDir(testResources(), "values");
-        new DocumentLoader(attrResourceLoader).loadResourceXmlDir(systemResources(), "values");
+        new DocumentLoader(testResources()).load("values", attrResourceLoader);
+        new DocumentLoader(systemResources()).load("values", attrResourceLoader);
     }
 
     @Test

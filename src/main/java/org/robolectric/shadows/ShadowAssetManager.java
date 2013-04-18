@@ -2,11 +2,11 @@ package org.robolectric.shadows;
 
 import android.content.res.AssetManager;
 import org.robolectric.AndroidManifest;
+import org.robolectric.internal.HiddenApi;
 import org.robolectric.internal.Implementation;
 import org.robolectric.internal.Implements;
+import org.robolectric.res.FsFile;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -29,16 +29,31 @@ public final class ShadowAssetManager {
 
     @Implementation
     public final String[] list(String path) throws IOException {
-        File file = new File(appManifest.getAssetsDirectory(), path);
+        FsFile file = appManifest.getAssetsDirectory().join(path);
         if (file.isDirectory()) {
-            return file.list();
+            return file.listFileNames();
         }
         return new String[0];
     }
 
     @Implementation
     public final InputStream open(String fileName) throws IOException {
-        return new FileInputStream(new File(appManifest.getAssetsDirectory(), fileName));
+        return appManifest.getAssetsDirectory().join(fileName).getInputStream();
     }
 
+    @HiddenApi @Implementation
+    public void setConfiguration(int mcc, int mnc, String locale,
+                                              int orientation, int touchscreen, int density, int keyboard,
+                                              int keyboardHidden, int navigation, int screenWidth, int screenHeight,
+                                              int smallestScreenWidthDp, int screenWidthDp, int screenHeightDp,
+                                              int screenLayout, int uiMode, int majorVersion) {
+    }
+
+    @HiddenApi @Implementation
+    public void ensureStringBlocks() {
+    }
+
+    public FsFile getAssetsDirectory() {
+        return appManifest.getAssetsDirectory();
+    }
 }

@@ -9,12 +9,12 @@ import org.robolectric.internal.Implementation;
 import org.robolectric.internal.Implements;
 
 /**
- * Shadow {@code MapActivity} that registers and unregisters a {@code BroadcastReciever} when {@link #onResume()} and
+ * Shadow {@code MapActivity} that registers and unregisters a {@code BroadcastReceiver} when {@link #onResume()} and
  * {@link #onPause()} are called respectively.
  */
 
 @SuppressWarnings({"UnusedDeclaration"})
-@Implements(MapActivity.class)
+@Implements(value = MapActivity.class, inheritImplementationMethods = true)
 public class ShadowMapActivity extends ShadowActivity {
     private ConnectivityBroadcastReceiver connectivityBroadcastReceiver = new ConnectivityBroadcastReceiver();
 

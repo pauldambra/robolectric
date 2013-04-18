@@ -9,7 +9,7 @@ import org.robolectric.internal.Implements;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-@Implements(SQLiteStatement.class)
+@Implements(value = SQLiteStatement.class, inheritImplementationMethods = true)
 public class ShadowSQLiteStatement extends ShadowSQLiteProgram {
     String mSql;
 
@@ -41,6 +41,15 @@ public class ShadowSQLiteStatement extends ShadowSQLiteProgram {
             } else {
                 throw new RuntimeException("Could not retrive generatedKeys");
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Implementation
+    public int executeUpdateDelete() {
+        try {
+            return actualDBstatement.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
